@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Our Talk · 私语回廊</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #E8E5DE;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            max-height: 100vh;
+            background: #F5F3EF;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-header {
+            padding: 12px 16px;
+            background: #F5F3EF;
+            border-bottom: 1px solid #E5DFD5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+        }
+
+        .contact-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #E0D8CC;
+            overflow: hidden;
+        }
+        .contact-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .contact-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: #6B6252;
+            background: rgba(220, 210, 195, 0.4);
+            padding: 4px 14px;
+            border-radius: 30px;
+        }
+
+        .settings-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #8F8268;
+        }
+
+        .auto-backup-badge {
+            position: absolute;
+            top: 70px;
+            right: 12px;
+            background: rgba(100, 150, 120, 0.9);
+            color: white;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            z-index: 10;
+            display: none;
+        }
+
+        .storage-warning {
+            background: #FDF4DC;
+            border-bottom: 1px solid #F0E0B0;
+            padding: 6px 12px;
+            font-size: 11px;
+            text-align: center;
+            color: #B8860B;
+            display: none;
+        }
+
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .settings-panel {
+            background: #FEFCF8;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 28px 28px 0 0;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            animation: slideUp 0.2s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .settings-panel h3 {
+            color: #6B614E;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        .settings-section {
+            margin-bottom: 24px;
+            border-top: 1px solid #EEE6DC;
+            padding-top: 16px;
+        }
+        .settings-section:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+        .toggle-switch {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .toggle-switch input {
+            width: 44px;
+            height: 24px;
+            appearance: none;
+            background: #DDD0BD;
+            border-radius: 24px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .toggle-switch input:checked {
+            background: #9BBF8F;
+        }
+        .toggle-switch input::before {
+            content: "";
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: 0.2s;
+        }
+        .toggle-switch input:checked::before {
+            left: 22px;
+        }
+        .phrase-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin: 12px 0;
+        }
+        .phrase-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #F7F4EF;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+        .phrase-text {
+            flex: 1;
+            font-size: 13px;
+            color: #5A5242;
+        }
+        .delete-phrase {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #C9BCA4;
+            padding: 0 8px;
+        }
+        .add-phrase {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .add-phrase input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #E0D6C8;
+            border-radius: 30px;
+            background: #FFFFFF;
+            font-size: 13px;
+            outline: none;
+        }
+        .add-phrase button {
+            background: #E5DDCF;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .btn-group button {
+            flex: 1;
+            background: #E5DDCF;
+            border: none;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .save-chat-btn, .backup-chat-btn, .restore-chat-btn, .export-txt-btn {
+            width: 100%;
+            background: #E5DDCF;
+            border: none;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .clear-chat-btn {
+            width: 100%;
+            background: #F0E4DC;
+            border: none;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 8px;
+            color: #B28B7A;
+        }
+        .close-settings {
+            width: 100%;
+            background: #F0ECE4;
+            border: none;
+            padding: 10px;
+            border-radius: 30px;
+            margin-top: 16px;
+            cursor: pointer;
+        }
+        .backup-hint {
+            font-size: 11px;
+            color: #B2A78F;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            max-width: 85%;
+            animation: fadeSlideUp 0.2s ease-out;
+        }
+        .message.outgoing {
+            align-self: flex-end;
+            justify-content: flex-end;
+        }
+        .message.incoming {
+            align-self: flex-start;
+        }
+
+        .bubble {
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.42;
+            word-break: break-word;
+        }
+        .bubble-image {
+            padding: 6px;
+            max-width: 220px;
+        }
+        .bubble-image img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 16px;
+        }
+        .outgoing .bubble:not(.bubble-image) {
+            background: #F5E0E0;
+            border-bottom-right-radius: 6px;
+        }
+        .incoming .bubble:not(.bubble-image) {
+            background: #DCE5F0;
+            border-bottom-left-radius: 6px;
+        }
+        .timestamp {
+            font-size: 0.6rem;
+            color: #B2A78F;
+            margin-top: 4px;
+            margin-left: 12px;
+        }
+        .outgoing .timestamp {
+            text-align: right;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #C9BCA4;
+            gap: 12px;
+        }
+
+        .input-area {
+            padding: 10px 12px 16px;
+            border-top: 1px solid #ECE4D8;
+        }
+        .input-wrapper {
+            display: flex;
+            gap: 8px;
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 5px 5px 5px 16px;
+            border: 1px solid #E2D9CD;
+        }
+        #messageInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            padding: 10px 0;
+            background: transparent;
+            resize: none;
+        }
+        .attach-btn, .send-btn {
+            background: #E8DFD0;
+            border: none;
+            border-radius: 40px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #8F8268;
+        }
+        .privacy-footer {
+            text-align: center;
+            font-size: 0.6rem;
+            color: #C5B89E;
+            padding: 6px 0 2px;
+        }
+        #imageUpload, #restoreFileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="contact-info" id="contactInfoBtn">
+            <div class="contact-avatar" id="contactAvatar">
+                <img id="avatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23D9CFBB'/%3E%3Ctext x='50' y='67' font-size='40' text-anchor='middle' fill='%239F927A'%3E👤%3C/text%3E%3C/svg%3E">
+            </div>
+            <div class="contact-name" id="contactName">灵魂伴侣</div>
+        </div>
+        <div class="settings-btn" id="settingsBtn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="2.5"/>
+                <circle cx="12" cy="5" r="2.5"/>
+                <circle cx="12" cy="19" r="2.5"/>
+            </svg>
+        </div>
+    </div>
+    <div id="autoBackupBadge" class="auto-backup-badge">💾 已自动备份</div>
+    <div id="storageWarning" class="storage-warning">
+        ⚠️ 存储空间不足，聊天记录可能无法保存，请立即导出备份！
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+        <div class="empty-state" id="emptyStatePlaceholder">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#C2B59B">
+                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke-width="1.3"/>
+                <path d="M15 3L21 3M21 3L21 9M21 3L12 12" stroke-width="1.3"/>
+            </svg>
+            <p>写下私语 · 对方会随机回应你</p>
+            <p style="font-size:11px;">💾 每30条消息自动备份 | 设置里可开启/关闭</p>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <textarea id="messageInput" rows="1" placeholder="输入消息..."></textarea>
+            <button class="attach-btn" id="attachBtn">📷</button>
+            <button class="send-btn" id="sendBtn">➤</button>
+        </div>
+        <div class="privacy-footer">🔒 记录保存在本设备 · 自动备份已开启</div>
+    </div>
+    <input type="file" id="imageUpload" accept="image/*">
+    <input type="file" id="restoreFileInput" accept=".json">
+</div>
+
+<script>
+    const FULL_PHRASES = [
+        "亲爱的", "老婆", "宝贝", "宝宝", "笨蛋", "傻瓜", "小猫", "乖", "是我", "找我", "我在", "我不在",
+        "早上", "中午", "下午", "晚上", "太早了", "太晚了", "知道", "不知道", "知道了", "对", "不对",
+        "好", "不好", "可以", "不可以", "在忙", "晚一点", "哪里？", "左边", "右边", "前面", "后面",
+        "偶尔", "经常", "总是", "一直", "永远", "（摸头）", "（抱）", "（亲）", "（坏笑）", "（害羞）",
+        "链接不稳定", "我正在努力", "等我", "马上就来", "喜欢", "不喜欢", "我陪你", "我很想你", 
+        "我爱你", "我一直在", "早点睡觉", "好好休息", "我相信你", "对不起", "我的错", "我心疼你",
+        "吃了什么？", "睡得好吗？", "我不会放手的", "我会永远爱你"
+    ];
+    
+    const STORAGE_KEYS = { 
+        MESSAGES: 'OurTalk_messages', 
+        PHRASES: 'OurTalk_phrases', 
+        CONTACT_NAME: 'OurTalk_contactName', 
+        CONTACT_AVATAR: 'OurTalk_contactAvatar',
+        AUTO_BACKUP: 'OurTalk_autoBackup',
+        LAST_BACKUP_COUNT: 'OurTalk_lastBackupCount'
+    };
+    
+    let currentPhrases = [], messages = [], isWaitingReply = false;
+    let contactName = "灵魂伴侣", contactAvatarUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23D9CFBB'/%3E%3Ctext x='50' y='67' font-size='40' text-anchor='middle' fill='%239F927A'%3E👤%3C/text%3E%3C/svg%3E";
+    let autoBackupEnabled = true;
+    let lastBackupCount = 0;
+    let backupBadgeTimeout = null;
+    
+    const messagesContainer = document.getElementById('messagesArea');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendBtn');
+    const attachBtn = document.getElementById('attachBtn');
+    const imageUpload = document.getElementById('imageUpload');
+    const emptyStateDiv = document.getElementById('emptyStatePlaceholder');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const contactInfoBtn = document.getElementById('contactInfoBtn');
+    const contactNameSpan = document.getElementById('contactName');
+    const avatarImg = document.getElementById('avatarImg');
+    const storageWarning = document.getElementById('storageWarning');
+    const restoreFileInput = document.getElementById('restoreFileInput');
+    const autoBackupBadge = document.getElementById('autoBackupBadge');
+    
+    function showBackupBadge() {
+        autoBackupBadge.style.display = 'block';
+        if (backupBadgeTimeout) clearTimeout(backupBadgeTimeout);
+        backupBadgeTimeout = setTimeout(() => {
+            autoBackupBadge.style.display = 'none';
+        }, 3000);
+    }
+    
+    function getFormattedTime() {
+        const now = new Date();
+        return `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    }
+    
+    function getRandomPhrase() {
+        if (!currentPhrases.length) return "（词库为空，请添加字卡）";
+        return currentPhrases[Math.floor(Math.random() * currentPhrases.length)];
+    }
+    
+    function checkStorageSpace() {
+        try {
+            const test = 'test';
+            localStorage.setItem('storage_test', test);
+            localStorage.removeItem('storage_test');
+            storageWarning.style.display = 'none';
+            return true;
+        } catch (e) {
+            storageWarning.style.display = 'block';
+            return false;
+        }
+    }
+    
+    // 自动备份功能 - 每30条消息自动备份到下载文件夹
+    function autoBackupIfNeeded() {
+        if (!autoBackupEnabled) return;
+        const backupInterval = 30; // 每30条消息备份一次
+        if (messages.length > 0 && messages.length % backupInterval === 0 && messages.length !== lastBackupCount) {
+            lastBackupCount = messages.length;
+            localStorage.setItem(STORAGE_KEYS.LAST_BACKUP_COUNT, lastBackupCount);
+            
+            const backup = {
+                version: '1.0',
+                autoBackup: true,
+                backupTime: new Date().toISOString(),
+                messageCount: messages.length,
+                messages: messages,
+                phrases: currentPhrases,
+                contactName: contactName,
+                contactAvatar: contactAvatarUrl
+            };
+            
+            const dataStr = JSON.stringify(backup, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `OurTalk_自动备份_${messages.length}条_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showBackupBadge();
+        }
+    }
+    
+    function saveMessages() {
+        try {
+            localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
+            checkStorageSpace();
+            autoBackupIfNeeded();
+            return true;
+        } catch (e) {
+            storageWarning.style.display = 'block';
+            return false;
+        }
+    }
+    
+    function savePhrases() { localStorage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(currentPhrases)); }
+    function saveContactInfo() { localStorage.setItem(STORAGE_KEYS.CONTACT_NAME, contactName); localStorage.setItem(STORAGE_KEYS.CONTACT_AVATAR, contactAvatarUrl); }
+    
+    // 尝试从 sessionStorage 恢复备份
+    function tryRecoverFromBackup() {
+        const storedBackupCount = localStorage.getItem(STORAGE_KEYS.LAST_BACKUP_COUNT);
+        if (storedBackupCount) lastBackupCount = parseInt(storedBackupCount) || 0;
+    }
+    
+    function loadStoredData() {
+        try {
+            const storedPhrases = localStorage.getItem(STORAGE_KEYS.PHRASES);
+            currentPhrases = storedPhrases ? JSON.parse(storedPhrases) : [...FULL_PHRASES];
+            const storedMessages = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+            messages = storedMessages ? JSON.parse(storedMessages) : [];
+            const storedName = localStorage.getItem(STORAGE_KEYS.CONTACT_NAME);
+            if (storedName) contactName = storedName;
+            const storedAvatar = localStorage.getItem(STORAGE_KEYS.CONTACT_AVATAR);
+            if (storedAvatar) contactAvatarUrl = storedAvatar;
+            const autoBackupSetting = localStorage.getItem(STORAGE_KEYS.AUTO_BACKUP);
+            autoBackupEnabled = autoBackupSetting !== 'false';
+            tryRecoverFromBackup();
+            checkStorageSpace();
+        } catch (e) {
+            messages = [];
+            currentPhrases = [...FULL_PHRASES];
+        }
+    }
+    
+    function renderMessages() {
+        const children = [...messagesContainer.children];
+        children.forEach(child => { if (child !== emptyStateDiv) child.remove(); });
+        if (messages.length === 0) { emptyStateDiv.style.display = 'flex'; return; }
+        emptyStateDiv.style.display = 'none';
+        messages.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${msg.type === 'outgoing' ? 'outgoing' : 'incoming'}`;
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            const bubble = document.createElement('div');
+            if (msg.isImage) {
+                bubble.className = 'bubble bubble-image';
+                const img = document.createElement('img');
+                img.src = msg.imageUrl;
+                bubble.appendChild(img);
+            } else {
+                bubble.className = 'bubble';
+                bubble.textContent = msg.text;
+            }
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'timestamp';
+            timeSpan.textContent = msg.timestamp;
+            wrapper.appendChild(bubble);
+            wrapper.appendChild(timeSpan);
+            messageDiv.appendChild(wrapper);
+            messagesContainer.appendChild(messageDiv);
+        });
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function addMessage(type, text, isImage = false, imageUrl = null) {
+        if (!isImage && (!text || text.trim() === '')) return false;
+        const newMsg = { type, timestamp: getFormattedTime(), isImage: isImage || false };
+        if (isImage) { newMsg.imageUrl = imageUrl; newMsg.text = '[图片]'; }
+        else { newMsg.text = text.trim(); }
+        messages.push(newMsg);
+        saveMessages();
+        renderMessages();
+        return true;
+    }
+    
+    function sendContactReply() {
+        if (isWaitingReply) return;
+        isWaitingReply = true;
+        const delay = Math.floor(Math.random() * 5000) + 5000;
+        setTimeout(() => {
+            addMessage('incoming', getRandomPhrase());
+            isWaitingReply = false;
+        }, delay);
+    }
+    
+    function sendOwnMessage() {
+        let content = messageInput.value;
+        if (!content.trim()) return;
+        addMessage('outgoing', content);
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        sendContactReply();
+    }
+    
+    function sendImage(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => { addMessage('outgoing', '', true, e.target.result); sendContactReply(); };
+        reader.readAsDataURL(file);
+    }
+    
+    function exportAsTxt() {
+        if (!messages.length) {
+            alert('暂无聊天记录可导出');
+            return;
+        }
+        let content = `Our Talk 聊天记录\n导出时间：${new Date().toLocaleString()}\n${'='.repeat(60)}\n\n`;
+        messages.forEach(msg => {
+            const sender = msg.type === 'outgoing' ? '我' : contactName;
+            const msgContent = msg.isImage ? '[图片]' : msg.text;
+            content += `[${msg.timestamp}] ${sender}: ${msgContent}\n`;
+        });
+        content += `\n${'='.repeat(60)}\n共 ${messages.length} 条消息`;
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `OurTalk_聊天记录_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        alert('✅ 已导出 TXT 文件！可以直接用记事本打开查看。');
+    }
+    
+    function exportAsBackup() {
+        const backup = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            messages: messages,
+            phrases: currentPhrases,
+            contactName: contactName,
+            contactAvatar: contactAvatarUrl
+        };
+        const dataStr = JSON.stringify(backup, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `OurTalk_备份_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        alert('✅ 已导出备份文件！可用于恢复聊天记录。');
+    }
+    
+    function restoreBackup(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (backup.messages && Array.isArray(backup.messages)) {
+                    messages = backup.messages;
+                    saveMessages();
+                }
+                if (backup.phrases && Array.isArray(backup.phrases)) {
+                    currentPhrases = backup.phrases;
+                    savePhrases();
+                }
+                if (backup.contactName) {
+                    contactName = backup.contactName;
+                    contactNameSpan.textContent = contactName;
+                }
+                if (backup.contactAvatar) {
+                    contactAvatarUrl = backup.contactAvatar;
+                    avatarImg.src = contactAvatarUrl;
+                }
+                saveContactInfo();
+                renderMessages();
+                alert('✅ 恢复成功！聊天记录已还原。');
+            } catch (err) {
+                alert('❌ 备份文件无效，无法恢复。');
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    function openSettings() {
+        const modal = document.createElement('div');
+        modal.className = 'settings-modal';
+        modal.innerHTML = `
+            <div class="settings-panel">
+                <h3>⚙️ 设置</h3>
+                <div class="settings-section">
+                    <div class="toggle-switch">
+                        <span>🤖 自动备份 (每30条消息自动保存)</span>
+                        <input type="checkbox" id="autoBackupToggle" ${autoBackupEnabled ? 'checked' : ''}>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3 style="font-size: 16px;">📚 字卡库 (${currentPhrases.length}条)</h3>
+                    <div class="phrase-list" id="phraseList"></div>
+                    <div class="add-phrase">
+                        <input type="text" id="newPhraseInput" placeholder="新字卡内容...">
+                        <button id="addPhraseBtn">➕ 添加</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3 style="font-size: 16px;">💾 聊天记录备份</h3>
+                    <button class="export-txt-btn" id="exportTxtBtn">📄 导出为TXT (直接查看)</button>
+                    <button class="backup-chat-btn" id="backupBtn">💾 导出备份文件 (用于恢复)</button>
+                    <button class="restore-chat-btn" id="restoreBtn">📥 恢复备份 (从文件恢复)</button>
+                    <button class="clear-chat-btn" id="clearChatBtn">🗑️ 清空聊天记录</button>
+                    <div class="backup-hint">
+                        💡 提示：<br>
+                        • 「自动备份」开启后，每30条消息自动保存一份备份文件到下载文件夹<br>
+                        • 「导出TXT」→ 可直接用记事本打开查看<br>
+                        • 「导出备份」→ 用于聊天记录丢失时恢复<br>
+                        • 建议定期导出TXT保存！
+                    </div>
+                </div>
+                <button class="close-settings" id="closeSettingsBtn">关闭</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        const autoBackupToggle = modal.querySelector('#autoBackupToggle');
+        autoBackupToggle.onchange = () => {
+            autoBackupEnabled = autoBackupToggle.checked;
+            localStorage.setItem(STORAGE_KEYS.AUTO_BACKUP, autoBackupEnabled);
+        };
+        
+        function renderPhraseList() {
+            const list = modal.querySelector('#phraseList');
+            if (!list) return;
+            list.innerHTML = '';
+            currentPhrases.forEach((p, i) => {
+                const item = document.createElement('div');
+                item.className = 'phrase-item';
+                item.innerHTML = `<span class="phrase-text">${escapeHtml(p)}</span><button class="delete-phrase" data-index="${i}">✕</button>`;
+                list.appendChild(item);
+            });
+            document.querySelectorAll('.delete-phrase').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.index);
+                    currentPhrases.splice(idx, 1);
+                    savePhrases();
+                    renderPhraseList();
+                    modal.querySelector('.settings-section h3').innerHTML = `📚 字卡库 (${currentPhrases.length}条)`;
+                });
+            });
+        }
+        function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+        renderPhraseList();
+        
+        modal.querySelector('#addPhraseBtn').onclick = () => {
+            const val = modal.querySelector('#newPhraseInput').value.trim();
+            if (!val) return alert('请输入字卡内容');
+            currentPhrases.push(val);
+            savePhrases();
+            modal.querySelector('#newPhraseInput').value = '';
+            renderPhraseList();
+            modal.querySelector('.settings-section h3').innerHTML = `📚 字卡库 (${currentPhrases.length}条)`;
+        };
+        
+        modal.querySelector('#exportTxtBtn').onclick = () => { exportAsTxt(); modal.remove(); };
+        modal.querySelector('#backupBtn').onclick = () => { exportAsBackup(); modal.remove(); };
+        modal.querySelector('#restoreBtn').onclick = () => { restoreFileInput.click(); modal.remove(); };
+        modal.querySelector('#clearChatBtn').onclick = () => {
+            if (confirm('⚠️ 确定清空所有聊天记录吗？\n建议先导出备份！')) {
+                messages = [];
+                saveMessages();
+                renderMessages();
+                modal.remove();
+            }
+        };
+        modal.querySelector('#closeSettingsBtn').onclick = () => modal.remove();
+        modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+    }
+    
+    restoreFileInput.onchange = (e) => {
+        if (e.target.files?.[0]) restoreBackup(e.target.files[0]);
+        restoreFileInput.value = '';
+    };
+    
+    function editContactInfo() {
+        const overlay = document.createElement('div');
+        overlay.className = 'settings-modal';
+        overlay.innerHTML = `
+            <div class="settings-panel" style="border-radius: 28px; max-width: 320px; margin: auto;">
+                <h3>编辑联系人</h3>
+                <div style="text-align:center; margin:16px 0;">
+                    <div style="width:80px; height:80px; border-radius:50%; overflow:hidden; margin:0 auto;"><img id="editAvatarImg" src="${contactAvatarUrl}" style="width:100%;height:100%;object-fit:cover"></div>
+                </div>
+                <input type="file" id="editAvatarUpload" accept="image/*" style="display:none">
+                <button id="chooseAvatarBtn" style="width:100%; background:#E5DDCF; border:none; padding:10px; border-radius:30px; margin-bottom:12px;">📷 选择头像</button>
+                <input type="text" id="editNameInput" placeholder="昵称" value="${contactName}" style="width:100%; padding:12px; border:1px solid #E0D6C8; border-radius:30px; margin-bottom:16px;">
+                <div style="display:flex; gap:12px;">
+                    <button id="saveContactBtn" style="flex:1; background:#E5DDCF; border:none; padding:10px; border-radius:30px;">保存</button>
+                    <button id="cancelContactBtn" style="flex:1; background:#F0ECE4; border:none; padding:10px; border-radius:30px;">取消</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const fileInput = overlay.querySelector('#editAvatarUpload');
+        const previewImg = overlay.querySelector('#editAvatarImg');
+        overlay.querySelector('#chooseAvatarBtn').onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files[0]) {
+                const r = new FileReader();
+                r.onload = (ev) => previewImg.src = ev.target.result;
+                r.readAsDataURL(e.target.files[0]);
+            }
+        };
+        overlay.querySelector('#saveContactBtn').onclick = () => {
+            let newName = overlay.querySelector('#editNameInput').value.trim();
+            if (newName) contactName = newName;
+            contactNameSpan.textContent = contactName;
+            contactAvatarUrl = previewImg.src;
+            avatarImg.src = contactAvatarUrl;
+            saveContactInfo();
+            overlay.remove();
+        };
+        overlay.querySelector('#cancelContactBtn').onclick = () => overlay.remove();
+        overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    }
+    
+    function addInitialGreetingIfNeeded() {
+        if (messages.length === 0) {
+            setTimeout(() => { if (messages.length === 0) addMessage('incoming', getRandomPhrase()); }, 300);
+        }
+    }
+    
+    function autoResize() { messageInput.style.height = 'auto'; messageInput.style.height = Math.min(messageInput.scrollHeight, 80) + 'px'; }
+    
+    function bindEvents() {
+        sendButton.onclick = (e) => { e.preventDefault(); sendOwnMessage(); };
+        attachBtn.onclick = () => imageUpload.click();
+        imageUpload.onchange = (e) => { if (e.target.files?.[0]) sendImage(e.target.files[0]); imageUpload.value = ''; };
+        messageInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendOwnMessage(); } };
+        messageInput.oninput = autoResize;
+        settingsBtn.onclick = openSettings;
+        contactInfoBtn.onclick = editContactInfo;
+    }
+    
+    function init() {
+        loadStoredData();
+        bindEvents();
+        avatarImg.src = contactAvatarUrl;
+        contactNameSpan.textContent = contactName;
+        renderMessages();
+        addInitialGreetingIfNeeded();
+        messageInput.focus();
+    }
+    init();
+</script>
+</body>
+</html>
